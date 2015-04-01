@@ -24,7 +24,7 @@ NETWORK_VM="192.168.1.0/24"		# NETWORK provided to/by VMs
 echo -e $red"You should configure the script before doing what you're doing..."$end && exit 0
 
 # Network config
-IN="eth0"	# good side
+INT="eth0"	# good side
 
 #### INPUT ####
 # Services that this system will offer to the inner network
@@ -52,8 +52,9 @@ OUTPUT_UDP_DHCP_IP=""
 #### Admin part ####
 # Network that will be used for remote mgmt
 # (if undefined, no rules will be setup)
-# NETWORK_MGMT=192.168.0.0/24
+# NETWORK_MGMT="192.168.0.0/24"	# you may restrict to a single IP address
 # NETWORK_MGMT="192.168.1.2/32"
+# ADMIN_MGMT_MAC="AA:BB:CC:00:11:33" # if you prefer to use MAC address instead of NETWORK/IP
 echo -e $red"You should add your IP before doing what you're doing..."$end && exit 0
 TCP_SERVICE_MGMT_SSH="22"
 
@@ -186,13 +187,17 @@ fw_start () {
 	$IPT -N SSH_ACCEPT
 	$IPT -A SSH_ACCEPT -m limit --limit 1/s -j LOG --log-prefix '[SSH_ADMIN]: '
 	$IPT -A SSH_ACCEPT -j ACCEPT
-	## Chain LOG_DROP: LOG&DROP unknown attempt
+	## Chain LOG_DROP: LOG&DROP unknown attempt if DEBUG
 	$IPT -N LOG_DROP
-	$IPT -A LOG_DROP -m limit --limit 1/s -j LOG --log-prefix '[LOG_DROP]: '
+	if [ $DEBUG -eq 1 ] ; then
+		$IPT -A LOG_DROP -m limit --limit 1/s -j LOG --log-prefix '[LOG_DROP]: '
+	fi
 	$IPT -A LOG_DROP -j DROP
-	## Chain LOG_DROP for IPv6: LOG&DROP unknown attempt
+	## Chain LOG_DROP for IPv6: LOG&DROP unknown attempt if DEBUG
 	$IPT6 -N LOG_DROP
-	$IPT6 -A LOG_DROP -m limit --limit 1/s -j LOG --log-prefix '[LOG_DROP]: '
+	if [ $DEBUG -eq 1 ] ; then
+		$IPT6 -A LOG_DROP -m limit --limit 1/s -j LOG --log-prefix '[LOG_DROP]: '
+	fi
 	$IPT6 -A LOG_DROP -j DROP	
 	
 	## Zeroising counters
@@ -430,7 +435,7 @@ cat <<'EOF'
 #			   Accept a few one in INPUT
 #			   Allow known in OUTPUT
 #			   Tips:
-#			   1. you may check with ip6tables -nvL and iptables -nvL
+#			   1. you may check with /sbin/ip6tables -nvL and /sbin/iptables -nvL
 #
 ### BEGIN INIT INFO
 # Provides: iptables
@@ -458,15 +463,15 @@ fw_stop () {
 	CUSTOM_CHAIN_TO_DELETE=""
 	$IPT -C SSH_ACCEPT -j ACCEPT
 	if [ $? -eq 0 ] ; then
-		CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE SSH_ACCEPT"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE SSH_ACCEPT"
 	fi
 	$IPT -C SSH_DROP -j DROP
 	if [ $? -eq 0 ] ; then
-		CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE SSH_DROP"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE SSH_DROP"
 	fi
 	$IPT -C LOG_DROP -j DROP
 	if [ $? -eq 0 ] ; then
-		CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE LOG_DROP"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE LOG_DROP"
 	fi
 	$IPT -F
 	if [ -n "$CUSTOM_CHAIN_TO_DELETE" ] ; then
