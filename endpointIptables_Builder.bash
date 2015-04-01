@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Less Simple EndPoint Firewall configuration Builder.
+# Less Simple Endpoint Firewall configuration Builder.
 #
 # Author: Nicolargo
 # Updater: onemoretime
@@ -18,16 +18,17 @@
 # Script Config
 DEBUG=0	 # will be less verbose (log and console)
 #DEBUG=1  # Will be more verbose (log and console)
-IS_VM=1	# if we are in a VM on a worstation
+IS_VM=0	# if we are in a VM on a worstation
+NETWORK_VM="192.168.1.0/24"		# NETWORK provided to/by VMs
 
 echo -e $red"You should configure the script before doing what you're doing..."$end && exit 0
 
 # Network config
-INT="eth0"
+IN="eth0"	# good side
 
-#### EndPoint Part ####
-# Services that the system will offer to the network
-INPUT_SSH_PORT="22"
+#### INPUT ####
+# Services that this system will offer to the inner network
+INPUT_SSH_PORT=""
 INPUT_SSH_IP=""			# Authorized IP for SSH (git, cmdline, ...) connections attempt
 ## TCP services
 INPUT_TCP_WEB_SERVICES="443"
@@ -41,9 +42,12 @@ INPUT_UDP_IP=""	# IP allowed to initiate TCP connection
 OUTPUT_TCP_SERVICES="22 80 123 443" # ssh, web browsing, updates downloads
 OUTPUT_UDP_SERVICES="67 53 123" # DNS, NTP. For large DNS request, you must authorize TCP/53.
 DNS_IP="8.8.8.8"
-OUTPUT_UDP_DHCP_PORT_SRC="68"
-OUTPUT_UDP_DHCP_PORT_DST="67"
+OUTPUT_UDP_DHCP_PORT_SRC=""
+OUTPUT_UDP_DHCP_PORT_DST=""
 OUTPUT_UDP_DHCP_IP=""
+
+
+# Services which are allowed from outside to inner
 
 #### Admin part ####
 # Network that will be used for remote mgmt
@@ -62,7 +66,7 @@ green="\e[32m"
 end="\e[00m"
 
 # Remote log
-REMOTE_LOG_ENABLED=1
+REMOTE_LOG_ENABLED=0
 REMOTE_LOG_IP=""
 REMOTE_LOG_TCP_PORT=514
 REMOTE_LOG_UDP_PORT=514
@@ -343,15 +347,15 @@ fw_stop () {
 	CUSTOM_CHAIN_TO_DELETE=""
 	$IPT -C SSH_ACCEPT -j ACCEPT
 	if [ $? -eq 0 ] ; then
-		$CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE SSH_ACCEPT"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE SSH_ACCEPT"
 	fi
 	$IPT -C SSH_DROP -j DROP
 	if [ $? -eq 0 ] ; then
-		$CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE SSH_DROP"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE SSH_DROP"
 	fi
 	$IPT -C LOG_DROP -j DROP
 	if [ $? -eq 0 ] ; then
-		$CUSTOM_CHAIN_TO_DELETE="$CUSTOM_CHAIN_TO_DELETE LOG_DROP"
+		CUSTOM_CHAIN_TO_DELETE=$CUSTOM_CHAIN_TO_DELETE + "$CUSTOM_CHAIN_TO_DELETE LOG_DROP"
 	fi
 	$IPT -F
 	if [ -n "$CUSTOM_CHAIN_TO_DELETE" ] ; then
