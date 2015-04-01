@@ -215,7 +215,7 @@ fw_start () {
 	### DROP INVALID IP PACKETS
 	$IPT -A INPUT -i $INT -s 10.0.0.0/8 -j DROP
 	$IPT -A INPUT -i $INT -s 172.16.0.0/16 -j DROP
-	if [ $IS_VM -eq 0 ] ; then
+	if [ $IS_VM -eq 0 ] && [ $IS_HOME -eq 0 ] ; then
 		$IPT -A INPUT -i $INT -s 192.168.0.0/24 -j DROP
 	fi
 	$IPT -A INPUT -i $INT -s 127.0.0.0/8 -j DROP
@@ -625,10 +625,10 @@ case "$1" in
 		fw_install
 		;;
 	test)
-		echo -en "Test Firewall rules..."
-		echo -n "Previous configuration will be restore in 30 seconds"
+		echo -en "Test Firewall rules...\n"
+		echo -en "Previous configuration will be restore in 30 seconds\n"
 		fw_test
-		echo -n "Configuration as been restored"
+		echo -en "Configuration as been restored\n"
 		;;
 	*)
 		echo -e $red"Usage: $0 {start|stop|restart|clear|install|test}"$end
