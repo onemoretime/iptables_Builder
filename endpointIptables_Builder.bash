@@ -19,7 +19,9 @@
 DEBUG=0	 # will be less verbose (log and console)
 #DEBUG=1  # Will be more verbose (log and console)
 IS_VM=0	# if we are in a VM on a worstation
+IS_HOME=1 # if we are at home
 NETWORK_VM="192.168.1.0/24"		# NETWORK provided to/by VMs
+NETWORK_HOME="192.168.1.0/24"		# NETWORK provided to/by VMs
 
 echo -e $red"You should configure the script before doing what you're doing..."$end && exit 0
 
@@ -454,8 +456,8 @@ IPT=/sbin/iptables
 IPT6=/sbin/ip6tables
 SCRIPTNAME=/etc/init.d/"$NAME"
 
-test -f $IPTABLES || exit 0
-test -f $IP6TABLES || exit 0
+test -f $IPT || exit 0
+test -f $IPT6 || exit 0
 
 . /lib/lsb/init-functions
 
