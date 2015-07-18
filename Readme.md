@@ -10,3 +10,6 @@
 You must configure IS_HOME, IS_VM, DEBUG and , of course, Management IP addresses :-P Otherwise, you'll cut your sockets down
 I left some warning before allowing you to "download-and-run" without check what i did...
 
+Remember to dos2unix *.bash
+
+#[![endorse](https://api.coderwall.com/onemoretime/endorsecount.png)](https://coderwall.com/onemoretime)
